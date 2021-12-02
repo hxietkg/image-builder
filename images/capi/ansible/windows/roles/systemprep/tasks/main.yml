@@ -49,6 +49,12 @@
 - name: Set WinRm Service to delayed start
   win_command: sc.exe config winrm start=delayed-auto
 
+# Windows update server doesn't support ipv6 well, let's take a chance to make ipv4
+# preferred over ipv6.
+- name: Set ipv4 preferred
+  win_command: netsh interface ipv6 set prefixpolicy ::ffff:0:0/96 46 4
+  when: (ipv4_preferred | default(false) | bool)
+
 # Best effort to update defender signatures
 # This can fail if there is already a signature
 # update running which means we will get them anyways
@@ -99,6 +105,11 @@
 
 - import_tasks: ssh-archive.yml
   when: ssh_source_url != ""
+
+# Reset ipv4 preferred
+- name: Reset ipv4 preferred
+  win_command: netsh interface ipv6 set prefixpolicy ::ffff:0:0/96 35 4
+  when: (ipv4_preferred | default(false) | bool)
 
 - name: Set default SSH shell to Powershell
   win_regedit:
